@@ -1,0 +1,22 @@
+sudo: required
+services: 
+  - docker
+
+before_install:
+  - docker build -t anassch/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run anassch/react-test npm test
+
+after_sucess:
+  -  docker build -t anassch/multi-client ./client
+  -  docker build -t anassch/multi-nginx ./nginx
+  -  docker build -t anassch/multi-server ./server
+  -  docker build -t anassch/multi-worker ./worker
+  #login in to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #take those images and push them to dockerhub
+  - docker push anassch/multi-client
+  - docker push anassch/multi-nginx
+  - docker push anassch/multi-server
+  - docker push anassch/multi-worker
