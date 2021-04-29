@@ -1,5 +1,7 @@
 sudo: required
-services: 
+language: generic
+
+services:
   - docker
 
 before_install:
@@ -8,15 +10,27 @@ before_install:
 script:
   - docker run -e CI=true anassch/react-test npm test
 
-after_sucess:
-  -  docker build -t anassch/multi-client ./client
-  -  docker build -t anassch/multi-nginx ./nginx
-  -  docker build -t anassch/multi-server ./server
-  -  docker build -t anassch/multi-worker ./worker
-  #login in to the docker cli
+after_success:
+  - docker build -t anassch/multi-client-10-14 ./client
+  - docker build -t anassch/multi-nginx-10-14 ./nginx
+  - docker build -t anassch/multi-server-10-14 ./server
+  - docker build -t anassch/multi-worker-10-14 ./worker
+  # Log in to the docker CLI
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
-  #take those images and push them to dockerhub
-  - docker push anassch/multi-client
-  - docker push anassch/multi-nginx
-  - docker push anassch/multi-server
-  - docker push anassch/multi-worker
+  # Take those images and push them to docker hub
+  - docker push anassch/multi-client-10-14
+  - docker push anassch/multi-nginx-10-14
+  - docker push anassch/multi-server-10-14
+  - docker push anassch/multi-worker-10-14
+
+deploy:
+  provider: elasticbeanstalk
+  region: 'us-east-1'
+  app: 'multi-docker'
+  env: 'MultiDocker-env'
+  bucket_name: 'elasticbeanstalk-us-east-1-923445559289'
+  bucket_path: 'docker-multi'
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
